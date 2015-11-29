@@ -164,19 +164,8 @@ class Currency_rate_update_service(models.Model):
         if self.service:
             currencies = []
             currency_list = supported_currency_array
-            company_id = False
-            if self.company_id.multi_company_currency_enable:
-                company_id = self.company_id.id
             currency_list = supported_currecies[self.service]
-            if company_id:
-                currencies = self.env['res.currency'].search(
-                    [('name', 'in', currency_list),
-                     '|', ('company_id', '=', company_id),
-                     ('company_id', '=', False)])
-            else:
-                currencies = self.env['res.currency'].search(
-                    [('name', 'in', currency_list),
-                     ('company_id', '=', False)])
+            currencies = self.env['res.currency'].search([('name', 'in', currency_list)])
             self.currency_list = [(6, 0, [curr.id for curr in currencies])]
 
     # List of webservicies the value sould be a class name
@@ -250,19 +239,11 @@ class Currency_rate_update_service(models.Model):
         # The multi company currency can be set or no so we handle
         # The two case
         if company.auto_currency_up:
-            main_currency = curr_obj.search(
-                [('base', '=', True), ('company_id', '=', company.id)],
-                limit=1)
+            main_currency = self.company_id.currency_id
             if not main_currency:
-                # If we can not find a base currency for this company
-                # we look for one with no company set
-                main_currency = curr_obj.search(
-                    [('base', '=', True), ('company_id', '=', False)],
-                    limit=1)
-            if not main_currency:
-                raise exceptions.Warning(_('There is no base currency set!'))
+                raise exceptions.Warning(_('Please set company currency!'))
             if main_currency.rate != 1:
-                raise exceptions.Warning(_('Base currency rate should '
+                raise exceptions.Warning(_('Company currency rate should '
                                            'be 1.00!'))
             note = self.note or ''
             try:
@@ -288,6 +269,10 @@ class Currency_rate_update_service(models.Model):
                             rate.rate = res[curr.name]
                             do_create = False
                             break
+                    #############################
+                    #Version 9 : company_id in currency rate
+                    #TIDYWAY : If we set company_id here, then it will set for that company only 
+                    #############################
                     if do_create:
                         vals = {
                             'currency_id': curr.id,
