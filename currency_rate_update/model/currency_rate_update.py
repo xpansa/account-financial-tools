@@ -269,15 +269,17 @@ class Currency_rate_update_service(models.Model):
                             rate.rate = res[curr.name]
                             do_create = False
                             break
-                    #############################
+                    ###################################################
                     #Version 9 : company_id in currency rate
-                    #TIDYWAY : If we set company_id here, then it will set for that company only 
+                    #TIDYWAY : I have set company_id that will be useful 
+                    #          for multi-company with different company currency 
                     #############################
                     if do_create:
                         vals = {
                             'currency_id': curr.id,
                             'rate': res[curr.name],
-                            'name': rate_name
+                            'name': rate_name,
+                            'company_id': self.env.user.company_id.id
                         }
                         rate_obj.create(vals)
                         _logger.info(
