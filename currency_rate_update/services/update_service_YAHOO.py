@@ -41,6 +41,12 @@ class YAHOO_getter(Currency_getter_interface):
             self.validate_cur(curr)
             res = self.get_url(url % (main_currency + curr))
             val = res.split(',')[1]
+            # Some currencies are so weak that Yahoo return 0 rate
+            if val == '0.0000':
+                res = self.get_url(url % (curr + main_currency))
+                val = res.split(',')[1]
+                val = float(val)
+                val = 1/val 
             if val:
                 self.updated_currency[curr] = val
             else:
